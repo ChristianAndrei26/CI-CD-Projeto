@@ -1,0 +1,38 @@
+name: CD - Entrega
+
+on:
+  push:
+    branches:
+      - main
+      - ci-cd
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  delivery:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validar aplicação
+        run: python -m compileall .
+
+      - name: Preparar entrega
+        run: |
+          mkdir -p dist
+          cp -r feature dist/
+          cp README.md dist/
+
+      - name: Publicar artefato
+        uses: actions/upload-artifact@v4
+        with:
+          name: calculadora-python
+          path: dist/
