@@ -23,6 +23,7 @@ jobs:
           import json
           import os
           import urllib.request
+          import urllib.error
 
           webhook = os.environ["DISCORD_WEBHOOK"]
 
@@ -33,15 +34,31 @@ jobs:
               f"Commit: {os.environ['COMMIT'][:7]}"
           )
 
-          dados = json.dumps({"content": mensagem}).encode("utf-8")
+          dados = json.dumps({
+              "content": mensagem
+          }).encode("utf-8")
 
           requisicao = urllib.request.Request(
               webhook,
               data=dados,
-              headers={"Content-Type": "application/json"},
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "GitHubActions-Discord-Notifier/1.0"
+              },
               method="POST"
           )
 
-          with urllib.request.urlopen(requisicao, timeout=20):
-              print("Alerta enviado ao Discord com sucesso!")
+          try:
+              with urllib.request.urlopen(
+                  requisicao, timeout=20
+              ) as resposta:
+                  print(
+                      f"Alerta enviado! HTTP {resposta.status}"
+                  )
+          except urllib.error.HTTPError as erro:
+              print(f"Falha HTTP: {erro.code}")
+              print(
+                  "Discord recusou a requisicao."
+              )
+              raise SystemExit(1)
           PY
