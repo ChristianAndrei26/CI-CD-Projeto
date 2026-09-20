@@ -1,0 +1,47 @@
+
+name: Alertas Discord
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  notificacao:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Enviar alerta ao Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          REPOSITORIO: ${{ github.repository }}
+          AUTOR: ${{ github.actor }}
+          COMMIT: ${{ github.sha }}
+        run: |
+          python3 - <<'PY'
+          import json
+          import os
+          import urllib.request
+
+          webhook = os.environ["DISCORD_WEBHOOK"]
+
+          mensagem = (
+              "GitHub Actions - Novo alerta!\n"
+              f"Repositorio: {os.environ['REPOSITORIO']}\n"
+              f"Autor: {os.environ['AUTOR']}\n"
+              f"Commit: {os.environ['COMMIT'][:7]}"
+          )
+
+          dados = json.dumps({"content": mensagem}).encode("utf-8")
+
+          requisicao = urllib.request.Request(
+              webhook,
+              data=dados,
+              headers={"Content-Type": "application/json"},
+              method="POST"
+          )
+
+          with urllib.request.urlopen(requisicao, timeout=20):
+              print("Alerta enviado ao Discord com sucesso!")
+          PY
